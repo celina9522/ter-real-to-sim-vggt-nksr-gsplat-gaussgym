@@ -12,10 +12,9 @@ pipeline Real-to-Sim :
 - GSplat pour le rendu photorealiste par Gaussian Splatting ;
 - GaussGym pour la simulation robotique avec Isaac Gym.
 
-Ce depot ne redistribue pas ces projets externes, leurs modeles preentraines,
+Ce depot ne redistribue pas les projets externes, leurs modeles preentraines,
 les gros jeux de donnees, les fichiers Gaussian Splat, les scenes reconstruites
-ou les binaires Isaac Gym. Ils doivent etre installes separement depuis leurs
-sources officielles.
+ou les binaires Isaac Gym.
 
 Seuls les scripts d'adaptation developpes pour ce projet sont fournis ici.
 
@@ -38,7 +37,7 @@ Le pipeline complet est le suivant :
 2. Executer VGGT-Omega pour estimer les parametres camera, les cartes de
    profondeur, les cartes de confiance et les points 3D denses.
 3. Convertir les sorties de VGGT-Omega vers une structure compatible COLMAP pour
-   GSplat.
+   pouvoir utiliser GSplat.
 4. Preparer un nuage de points oriente pour NKSR.
 5. Reconstruire un maillage physique avec NKSR.
 6. Entrainer ou exporter une scene GSplat photorealiste.
@@ -46,20 +45,24 @@ Le pipeline complet est le suivant :
    normalise de GSplat.
 8. Charger la scene adaptee dans GaussGym.
 
-## Dependances externes
+## Outils utilises
 
-Installez les projets principaux depuis leurs depots officiels ou leurs
-instructions d'installation officielles :
+Ce depot contient uniquement les scripts ajoutes pour le projet TER. Il ne
+contient pas le code source complet de VGGT-Omega, NKSR ou GSplat, ni les
+binaires NVIDIA Isaac Gym.
+
+Les outils directement utilises par les scripts sont :
 
 - VGGT-Omega
 - NKSR
 - GSplat
 - GaussGym
-- NVIDIA Isaac Gym
-- COLMAP ou une structure de donnees compatible COLMAP
 
-Les scripts de ce depot supposent que ces outils sont deja installes et
-disponibles dans vos environnements Python.
+GSplat n'est pas reimplemente dans ce depot. Dans ce projet, il est seulement
+utilise comme outil externe pour entrainer ou exporter une representation
+photorealiste de la scene. C'est pour cette raison qu'il n'y a pas de code
+GSplat ici : le travail porte sur la preparation des donnees et l'alignement avec
+GaussGym.
 
 ## Structure du depot
 
@@ -141,6 +144,19 @@ gaussgym/adapt_meshes_to_gsplat_normalization.py
 
 C'est le script d'integration principal pour GaussGym.
 
+### Entrees attendues par GaussGym
+
+A la fin du pipeline, GaussGym utilise principalement :
+
+- un maillage physique, par exemple `nksr_mesh.ply`, pour les collisions ;
+- les trajectoires camera de la scene, stockees dans les fichiers JSON de
+  GaussGym ;
+- une scene GSplat deja entrainee ou exportee pour le rendu RGB ;
+- les informations de normalisation issues du parser GSplat/COLMAP.
+
+Ces entrees doivent etre coherentes entre elles avant le chargement dans
+GaussGym. C'est le role du script d'alignement.
+
 Le probleme principal resolu par ce script est le decalage de repere entre :
 
 - le maillage NKSR, initialement exprime dans le repere de reconstruction
@@ -166,6 +182,12 @@ Le script :
 
 Cette etape est necessaire avant de charger ensemble le maillage NKSR et le rendu
 GSplat dans GaussGym.
+
+Le script d'alignement lit la normalisation appliquee par GSplat a partir des
+donnees de type COLMAP, puis transforme les fichiers JSON de la scene GaussGym.
+En particulier, il met a jour les positions camera (`cam_trans`), les
+orientations (`cam_quat`) et les parametres de transformation globale pour que le
+maillage NKSR, les cameras et le splat soient dans le meme repere.
 
 ## Exemple d'utilisation
 
