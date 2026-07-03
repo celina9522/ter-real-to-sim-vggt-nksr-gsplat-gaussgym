@@ -1,65 +1,67 @@
-# Real-to-Sim Pipeline: VGGT-Omega, NKSR, GSplat and GaussGym
+# Pipeline Real-to-Sim : VGGT-Omega, NKSR, GSplat et GaussGym
 
-This repository contains the scripts developed during a TER project on
-photorealistic and physically coherent 3D environment reconstruction from
-monocular videos.
+Ce depot contient les scripts developpes pendant un projet TER sur la
+reconstruction 3D photorealiste et physiquement coherente d'environnements a
+partir de videos monoculaires.
 
-The goal of this work is to connect four existing research tools in a single
-Real-to-Sim pipeline:
+L'objectif est de relier quatre outils de recherche existants dans un meme
+pipeline Real-to-Sim :
 
-- VGGT-Omega for 3D reconstruction from monocular video frames;
-- NKSR for physical mesh reconstruction;
-- GSplat for photorealistic Gaussian Splatting rendering;
-- GaussGym for robotic simulation with Isaac Gym.
+- VGGT-Omega pour la reconstruction 3D a partir d'images extraites d'une video ;
+- NKSR pour la reconstruction du maillage physique ;
+- GSplat pour le rendu photorealiste par Gaussian Splatting ;
+- GaussGym pour la simulation robotique avec Isaac Gym.
 
-This repository does not redistribute these external projects, their pretrained
-models, large datasets, Gaussian Splat files, reconstructed scenes or Isaac Gym
-binaries. They must be installed separately from their official sources.
+Ce depot ne redistribue pas ces projets externes, leurs modeles preentraines,
+les gros jeux de donnees, les fichiers Gaussian Splat, les scenes reconstruites
+ou les binaires Isaac Gym. Ils doivent etre installes separement depuis leurs
+sources officielles.
 
-Only the adaptation scripts developed for this project are provided here.
+Seuls les scripts d'adaptation developpes pour ce projet sont fournis ici.
 
-## Project Context
+## Contexte du projet
 
-GaussGym is a modular Real-to-Sim framework that separates the representation
-used for physics from the representation used for visual rendering. In the
-pipeline studied in this project, the physical geometry is represented by a mesh
-generated with NKSR, while the photorealistic RGB observations are generated
-with GSplat.
+GaussGym est un framework Real-to-Sim modulaire qui separe la representation
+utilisee pour la physique de celle utilisee pour le rendu visuel. Dans le
+pipeline etudie ici, la geometrie physique est representee par un maillage
+genere avec NKSR, tandis que les observations RGB photorealistes sont generees
+avec GSplat.
 
-The original GaussGym examples mainly rely on already reconstructed scenes, for
-example from smartphone scans or Polycam data. In this project, this upstream
-reconstruction step is replaced by VGGT-Omega in order to start from a simple
-monocular video.
+Les exemples originaux de GaussGym reposent principalement sur des scenes deja
+reconstruites, par exemple a partir de scans de smartphone ou de donnees
+Polycam. Dans ce projet, cette etape de reconstruction en amont est remplacee
+par VGGT-Omega afin de partir d'une simple video monoculaire.
 
-The complete pipeline is:
+Le pipeline complet est le suivant :
 
-1. Extract frames from a monocular video.
-2. Run VGGT-Omega to estimate camera parameters, depth maps, confidence maps and
-   dense 3D points.
-3. Convert VGGT-Omega outputs into a COLMAP-like structure for GSplat.
-4. Prepare an oriented point cloud for NKSR.
-5. Reconstruct a physical mesh with NKSR.
-6. Train or export a photorealistic GSplat scene.
-7. Align the NKSR mesh and GaussGym camera trajectories with the normalized
-   GSplat coordinate frame.
-8. Load the adapted scene in GaussGym.
+1. Extraire les images d'une video monoculaire.
+2. Executer VGGT-Omega pour estimer les parametres camera, les cartes de
+   profondeur, les cartes de confiance et les points 3D denses.
+3. Convertir les sorties de VGGT-Omega vers une structure compatible COLMAP pour
+   GSplat.
+4. Preparer un nuage de points oriente pour NKSR.
+5. Reconstruire un maillage physique avec NKSR.
+6. Entrainer ou exporter une scene GSplat photorealiste.
+7. Aligner le maillage NKSR et les trajectoires camera GaussGym avec le repere
+   normalise de GSplat.
+8. Charger la scene adaptee dans GaussGym.
 
-## External Dependencies
+## Dependances externes
 
-Install the main projects from their official repositories or official
-installation instructions:
+Installez les projets principaux depuis leurs depots officiels ou leurs
+instructions d'installation officielles :
 
 - VGGT-Omega
 - NKSR
 - GSplat
 - GaussGym
 - NVIDIA Isaac Gym
-- COLMAP or a COLMAP-compatible dataset structure
+- COLMAP ou une structure de donnees compatible COLMAP
 
-The scripts in this repository assume that these tools are already installed and
-available in your Python environments.
+Les scripts de ce depot supposent que ces outils sont deja installes et
+disponibles dans vos environnements Python.
 
-## Repository Structure
+## Structure du depot
 
 ```text
 vggt_omega/
@@ -77,113 +79,120 @@ docs/
 
 ## Scripts
 
-### 1. VGGT-Omega to GSplat Data Preparation
+### 1. Preparation des donnees VGGT-Omega pour GSplat
 
-File:
+Fichier :
 
 ```text
 vggt_omega/extract_omega_from_video_gsplat.py
 ```
 
-This script runs VGGT-Omega on images extracted from a video and prepares the
-outputs for the next stages of the pipeline.
+Ce script execute VGGT-Omega sur des images extraites d'une video et prepare les
+sorties pour les etapes suivantes du pipeline.
 
-It is used to:
+Il sert a :
 
-- load a VGGT-Omega checkpoint;
-- extract frames from a monocular video;
-- estimate camera intrinsics and extrinsics;
-- predict depth maps and confidence maps;
-- reconstruct dense 3D points from depth;
-- check the camera-pose convention;
-- filter unreliable points;
-- prepare data that can be used for GSplat training and NKSR preprocessing.
+- charger un checkpoint VGGT-Omega ;
+- extraire les images d'une video monoculaire ;
+- estimer les intrinseques et extrinseques camera ;
+- predire les cartes de profondeur et les cartes de confiance ;
+- reconstruire des points 3D denses a partir de la profondeur ;
+- verifier la convention des poses camera ;
+- filtrer les points peu fiables ;
+- preparer les donnees utilisables pour l'entrainement GSplat et le
+  pretraitement NKSR.
 
-In the TER report, this corresponds to the adaptation of VGGT-Omega outputs for
-the geometric branch and the photorealistic branch of the pipeline.
+Dans le rapport TER, cette partie correspond a l'adaptation des sorties de
+VGGT-Omega pour la branche geometrique et la branche photorealiste du pipeline.
 
-### 2. NKSR Mesh Reconstruction
+### 2. Reconstruction du maillage avec NKSR
 
-File:
+Fichier :
 
 ```text
 nksr/run_nksr_from_vggt_omega.py
 ```
 
-This script reconstructs a physical mesh from the point cloud and normals
-prepared from VGGT-Omega outputs.
+Ce script reconstruit un maillage physique a partir du nuage de points et des
+normales prepares depuis les sorties VGGT-Omega.
 
-It is used to:
+Il sert a :
 
-- load one or several `.npz` files containing points, normals and colors;
-- filter invalid points and normals;
-- optionally downsample the point cloud;
-- run NKSR reconstruction on GPU;
-- extract a triangular mesh;
-- transfer colors from the source point cloud to the mesh vertices;
-- export the result as `nksr_mesh.ply`.
+- charger un ou plusieurs fichiers `.npz` contenant points, normales et
+  couleurs ;
+- filtrer les points et normales invalides ;
+- sous-echantillonner optionnellement le nuage de points ;
+- executer la reconstruction NKSR sur GPU ;
+- extraire un maillage triangulaire ;
+- transferer les couleurs du nuage de points source vers les sommets du
+  maillage ;
+- exporter le resultat sous le nom `nksr_mesh.ply`.
 
-This mesh is intended to be used as the physical collision geometry in GaussGym.
+Ce maillage est destine a etre utilise comme geometrie de collision physique
+dans GaussGym.
 
-### 3. GaussGym / GSplat Coordinate Alignment
+### 3. Alignement des coordonnees GaussGym / GSplat
 
-File:
+Fichier :
 
 ```text
 gaussgym/adapt_meshes_to_gsplat_normalization.py
 ```
 
-This is the key integration script for GaussGym.
+C'est le script d'integration principal pour GaussGym.
 
-The main issue solved by this script is the coordinate-frame mismatch between:
+Le probleme principal resolu par ce script est le decalage de repere entre :
 
-- the NKSR mesh, initially expressed in the original reconstruction frame;
-- the GaussGym camera trajectories;
-- the exported GSplat scene, expressed in GSplat's normalized COLMAP frame.
+- le maillage NKSR, initialement exprime dans le repere de reconstruction
+  original ;
+- les trajectoires camera GaussGym ;
+- la scene GSplat exportee, exprimee dans le repere COLMAP normalise de GSplat.
 
-The chosen solution is not to modify the exported Gaussian Splat. Instead, the
-script transforms the GaussGym scene files so that the mesh vertices and camera
-trajectories are expressed in the same normalized frame as GSplat.
+La solution choisie consiste a ne pas modifier le Gaussian Splat exporte. A la
+place, le script transforme les fichiers de scene GaussGym afin que les sommets
+du maillage et les trajectoires camera soient exprimes dans le meme repere
+normalise que GSplat.
 
-The script:
+Le script :
 
-- reads the GSplat/COLMAP parser normalization transform;
-- transforms GaussGym mesh vertices;
-- transforms camera positions (`cam_trans`);
-- transforms camera orientations (`cam_quat`);
-- resets `offset` to zero;
-- resets `from_ig_rotation` to identity;
-- writes an identity `splatfacto/dataparser_transforms.json`, because the splat
-  is already normalized.
+- lit la transformation de normalisation du parser GSplat/COLMAP ;
+- transforme les sommets du maillage GaussGym ;
+- transforme les positions camera (`cam_trans`) ;
+- transforme les orientations camera (`cam_quat`) ;
+- remet `offset` a zero ;
+- remet `from_ig_rotation` a l'identite ;
+- ecrit un fichier `splatfacto/dataparser_transforms.json` identite, car le
+  splat est deja normalise.
 
-This step is required before loading the NKSR mesh and GSplat rendering together
-inside GaussGym.
+Cette etape est necessaire avant de charger ensemble le maillage NKSR et le rendu
+GSplat dans GaussGym.
 
-## Example Usage
+## Exemple d'utilisation
 
-The exact paths depend on your local installation. The following commands show
-the intended order of use.
+Les chemins exacts dependent de votre installation locale. Les commandes
+suivantes montrent l'ordre d'utilisation prevu.
 
-### Run VGGT-Omega and prepare GSplat/NKSR data
+### Executer VGGT-Omega et preparer les donnees GSplat/NKSR
 
-Edit the paths inside:
+Modifiez les chemins dans :
 
 ```text
 vggt_omega/extract_omega_from_video_gsplat.py
 ```
 
-Then run it inside your VGGT-Omega environment:
+Puis executez le script dans votre environnement VGGT-Omega :
 
 ```bash
 python vggt_omega/extract_omega_from_video_gsplat.py
 ```
 
-The script produces VGGT-Omega outputs such as camera parameters, depth maps,
-confidence maps, point clouds and converted data for the next stages.
+Le script produit les sorties VGGT-Omega : parametres camera, cartes de
+profondeur, cartes de confiance, nuages de points et donnees converties pour les
+etapes suivantes.
 
-### Run NKSR
+### Executer NKSR
 
-Inside your NKSR environment:
+Dans votre environnement NKSR :
 
 ```bash
 python nksr/run_nksr_from_vggt_omega.py \
@@ -194,15 +203,15 @@ python nksr/run_nksr_from_vggt_omega.py \
   --mise_iter 1
 ```
 
-The output mesh is saved as:
+Le maillage de sortie est sauvegarde sous le nom :
 
 ```text
 nksr_mesh.ply
 ```
 
-### Align the GaussGym Scene with GSplat
+### Aligner la scene GaussGym avec GSplat
 
-Inside the GaussGym environment:
+Dans l'environnement GaussGym :
 
 ```bash
 python gaussgym/adapt_meshes_to_gsplat_normalization.py \
@@ -213,9 +222,9 @@ python gaussgym/adapt_meshes_to_gsplat_normalization.py \
   --overwrite
 ```
 
-The output scene can then be loaded in GaussGym as a local scene.
+La scene de sortie peut ensuite etre chargee dans GaussGym comme scene locale.
 
-Example:
+Exemple :
 
 ```bash
 gauss_play \
@@ -228,10 +237,10 @@ gauss_play \
 
 ## Notes
 
-This repository is intended as a lightweight code release for reproducing the
-adaptation work, not as a full standalone implementation of VGGT-Omega, NKSR,
-GSplat or GaussGym.
+Ce depot est une publication legere du code permettant de reproduire le travail
+d'adaptation. Ce n'est pas une implementation autonome complete de VGGT-Omega,
+NKSR, GSplat ou GaussGym.
 
-Large files such as checkpoints, videos, reconstructed meshes, Gaussian Splat
-PLY files and simulation logs should not be committed to this repository.
-
+Les gros fichiers comme les checkpoints, videos, maillages reconstruits,
+fichiers PLY de Gaussian Splat et logs de simulation ne doivent pas etre ajoutes
+a ce depot.

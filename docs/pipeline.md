@@ -1,55 +1,55 @@
-# Pipeline Notes
+# Notes sur le pipeline
 
-This document summarizes the role of each stage in the project pipeline.
+Ce document resume le role de chaque etape dans le pipeline du projet.
 
-## 1. VGGT-Omega Reconstruction
+## 1. Reconstruction avec VGGT-Omega
 
-VGGT-Omega is used to replace the original upstream reconstruction stage of
-GaussGym. Starting from a monocular video, frames are extracted and processed by
-VGGT-Omega to estimate:
+VGGT-Omega est utilise pour remplacer l'etape de reconstruction en amont
+originalement utilisee par GaussGym. A partir d'une video monoculaire, des
+images sont extraites puis traitees par VGGT-Omega afin d'estimer :
 
-- camera intrinsics;
-- camera extrinsics;
-- depth maps;
-- depth confidence maps;
-- dense 3D point maps.
+- les intrinseques camera ;
+- les extrinseques camera ;
+- les cartes de profondeur ;
+- les cartes de confiance de profondeur ;
+- les cartes de points 3D denses.
 
-These outputs are then used in two branches:
+Ces sorties sont ensuite utilisees dans deux branches :
 
-- a geometric branch for NKSR;
-- a photorealistic branch for GSplat.
+- une branche geometrique pour NKSR ;
+- une branche photorealiste pour GSplat.
 
-## 2. NKSR Physical Mesh
+## 2. Maillage physique avec NKSR
 
-NKSR reconstructs a continuous triangular mesh from an oriented point cloud.
-The point cloud must contain reliable 3D points and normals. In the TER work,
-normals are estimated from VGGT-Omega points using a local PCA strategy because
-it was more robust than direct cross-product normals computed from depth-map
-neighbors.
+NKSR reconstruit un maillage triangulaire continu a partir d'un nuage de points
+oriente. Le nuage de points doit contenir des points 3D et des normales fiables.
+Dans le travail TER, les normales sont estimees depuis les points VGGT-Omega avec
+une strategie de PCA locale, car cette methode etait plus robuste que les
+normales calculees directement par produit vectoriel entre voisins dans la carte
+de profondeur.
 
-The resulting mesh is used as the collision geometry in GaussGym.
+Le maillage obtenu est utilise comme geometrie de collision dans GaussGym.
 
-## 3. GSplat Photorealistic Rendering
+## 3. Rendu photorealiste avec GSplat
 
-GSplat reconstructs the visual appearance of the scene as a set of 3D
-Gaussians. It uses the images and camera parameters estimated from VGGT-Omega,
-converted into a COLMAP-compatible structure.
+GSplat reconstruit l'apparence visuelle de la scene sous la forme d'un ensemble
+de gaussiennes 3D. Il utilise les images et les parametres camera estimes par
+VGGT-Omega, convertis dans une structure compatible COLMAP.
 
-GSplat is used only for photorealistic RGB rendering. It does not provide the
-physical collision geometry.
+GSplat est utilise uniquement pour le rendu RGB photorealiste. Il ne fournit pas
+la geometrie de collision physique.
 
-## 4. GaussGym Integration
+## 4. Integration dans GaussGym
 
-GaussGym combines:
+GaussGym combine :
 
-- the NKSR mesh for physics;
-- the GSplat scene for RGB observations.
+- le maillage NKSR pour la physique ;
+- la scene GSplat pour les observations RGB.
 
-The main integration issue is coordinate alignment. GSplat normalizes the
-COLMAP scene during training, so the exported splat is expressed in a normalized
-frame. The NKSR mesh and GaussGym camera trajectories must therefore be
-transformed into that same normalized frame.
+Le principal probleme d'integration est l'alignement des coordonnees. GSplat
+normalise la scene COLMAP pendant l'entrainement, donc le splat exporte est
+exprime dans un repere normalise. Le maillage NKSR et les trajectoires camera
+GaussGym doivent donc etre transformes vers ce meme repere normalise.
 
-The script `gaussgym/adapt_meshes_to_gsplat_normalization.py` performs this
+Le script `gaussgym/adapt_meshes_to_gsplat_normalization.py` effectue cette
 conversion.
-
