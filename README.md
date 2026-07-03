@@ -53,10 +53,10 @@ binaires NVIDIA Isaac Gym.
 
 Les outils directement utilises par les scripts sont :
 
-- VGGT-Omega
-- NKSR
-- GSplat
-- GaussGym
+- VGGT-Omega : https://github.com/facebookresearch/vggt-omega
+- NKSR : https://github.com/nv-tlabs/nksr
+- GSplat : https://github.com/nerfstudio-project/gsplat
+- GaussGym : https://github.com/escontra/gauss_gym
 
 GSplat n'est pas reimplemente dans ce depot. Dans ce projet, il est seulement
 utilise comme outil externe pour entrainer ou exporter une representation
